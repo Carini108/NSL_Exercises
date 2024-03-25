@@ -1,0 +1,100 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Read data from file
+data = []
+with open('./MD_MC_solid/output_temp_solid.dat', 'r') as f:
+    for line in f:
+        if line.strip():  # ignore empty lines
+            cols = line.split()
+            data.append([float(cols[0]), float(cols[2]), float(cols[3])])
+
+# Convert data into separate lists for x, y, and y_err
+x = [row[0] for row in data]
+y = [row[1] for row in data]
+y_err = [row[2] for row in data]
+
+# Exclude the first data point
+x = x[1:]
+y = y[1:]
+y_err = y_err[1:]
+
+plt.figure(figsize=(7, 5))
+
+# Plot
+plt.errorbar(x, y, yerr=y_err, color='peru', fmt='o', ecolor='sandybrown')
+plt.xlabel('$\#$ of blocks')
+plt.xticks(np.arange(0, 30, step=5))
+plt.ylabel('<T>')
+plt.title('Solid - temperature')
+plt.grid(True)
+plt.show() 
+
+
+/////////////////////////
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Read data from file
+data = []
+with open('./MD_MC_liquid/output_temp_liquid.dat', 'r') as f:
+    for line in f:
+        if line.strip():  # ignore empty lines
+            cols = line.split()
+            data.append([float(cols[0]), float(cols[2]), float(cols[3])])
+
+# Convert data into separate lists for x, y, and y_err
+x = [row[0] for row in data]
+y = [row[1] for row in data]
+y_err = [row[2] for row in data]
+
+# Exclude the first data point
+x = x[1:]
+y = y[1:]
+y_err = y_err[1:]
+
+plt.figure(figsize=(7, 5))
+
+# Plot
+plt.errorbar(x, y, yerr=y_err, color='mediumaquamarine', fmt='o', ecolor='mediumaquamarine')
+plt.xlabel('$\#$ of blocks')
+plt.xticks(np.arange(0, 30, step=5))
+plt.ylabel('<T>')
+plt.title('Liquid - temperature')
+plt.grid(True)
+plt.show() 
+
+///////////////
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Read data from file
+data = []
+with open('./MD_MC_gas/output_temp_gas.dat', 'r') as f:
+    for line in f:
+        if line.strip():  # ignore empty lines
+            cols = line.split()
+            data.append([float(cols[0]), float(cols[2]), float(cols[3])])
+
+# Convert data into separate lists for x, y, and y_err
+x = [row[0] for row in data]
+y = [row[1] for row in data]
+y_err = [row[2] for row in data]
+
+# Exclude the first data point
+x = x[1:]
+y = y[1:]
+y_err = y_err[1:]
+
+plt.figure(figsize=(7, 5))
+
+# Plot
+plt.errorbar(x, y, yerr=y_err, color='lightcoral', fmt='o', ecolor='lightcoral')
+plt.xlabel('$\#$ of blocks')
+plt.xticks(np.arange(0, 30, step=5))
+plt.ylabel('<T>')
+plt.title('Gas - temperature')
+plt.grid(True)
+plt.show() 
