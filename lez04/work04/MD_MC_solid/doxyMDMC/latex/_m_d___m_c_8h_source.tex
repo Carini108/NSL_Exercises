@@ -1,0 +1,57 @@
+\doxysection{C\+:/\+LSN/lez04/work04/\+MD\+\_\+\+MC\+\_\+solid/\+MD\+\_\+\+MC.h}
+\hypertarget{_m_d___m_c_8h_source}{}\label{_m_d___m_c_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ \_\_fluid\_\_}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ \_\_fluid\_\_}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//Random\ numbers}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}random.h"{}}}
+\DoxyCodeLine{00006\ \textcolor{keywordtype}{int}\ seed[4];}
+\DoxyCodeLine{00007\ \mbox{\hyperlink{class_random}{Random}}\ rnd;}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{comment}{//parameters,\ observables}}
+\DoxyCodeLine{00010\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ m\_props=1000;}
+\DoxyCodeLine{00011\ \textcolor{keywordtype}{int}\ n\_props,\ iv,\ ik,\ it,\ ie,\ iw,\ ip;}
+\DoxyCodeLine{00012\ \textcolor{keywordtype}{double}\ vtail,\ ptail,\ bin\_size,\ nbins,\ sd;}
+\DoxyCodeLine{00013\ \textcolor{keywordtype}{double}\ walker[m\_props];}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ averages}}
+\DoxyCodeLine{00016\ \textcolor{keywordtype}{double}\ blk\_av[m\_props],\ blk\_norm,\ accepted,\ attempted;}
+\DoxyCodeLine{00017\ \textcolor{keywordtype}{double}\ glob\_av[m\_props],\ glob\_av2[m\_props];}
+\DoxyCodeLine{00018\ \textcolor{keywordtype}{double}\ stima\_pot,\ stima\_pres,\ stima\_kin,\ stima\_etot,\ stima\_temp;}
+\DoxyCodeLine{00019\ \textcolor{keywordtype}{double}\ err\_pot,\ err\_pres,\ err\_kin,\ err\_etot,\ err\_temp,\ err\_gdir;}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//configuration}}
+\DoxyCodeLine{00022\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ m\_part=108;}
+\DoxyCodeLine{00023\ \textcolor{keywordtype}{double}\ x[m\_part],\ \ \ \ y[m\_part],\ \ \ \ z[m\_part];}
+\DoxyCodeLine{00024\ \textcolor{keywordtype}{double}\ xold[m\_part],\ yold[m\_part],\ zold[m\_part];}
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{double}\ vx[m\_part],\ \ vy[m\_part],\ \ \ vz[m\_part];}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ thermodynamical\ state}}
+\DoxyCodeLine{00028\ \textcolor{keywordtype}{int}\ npart;}
+\DoxyCodeLine{00029\ \textcolor{keywordtype}{double}\ beta,temp,energy,vol,rho,box,rcut;}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ simulation}}
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{int}\ iNVET,\ nstep,\ nblk,\ restart;}
+\DoxyCodeLine{00033\ \textcolor{keywordtype}{double}\ delta;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//pigreco}}
+\DoxyCodeLine{00036\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ pi=3.1415927;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{//functions}}
+\DoxyCodeLine{00039\ \textcolor{keywordtype}{void}\ Input(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00040\ \textcolor{keywordtype}{void}\ Reset(\textcolor{keywordtype}{int});}
+\DoxyCodeLine{00041\ \textcolor{keywordtype}{void}\ Accumulate(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00042\ \textcolor{keywordtype}{void}\ Averages(\textcolor{keywordtype}{int});}
+\DoxyCodeLine{00043\ \textcolor{keywordtype}{void}\ Move(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00044\ \textcolor{keywordtype}{void}\ ConfFinal(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00045\ \textcolor{keywordtype}{void}\ ConfXYZ(\textcolor{keywordtype}{int});}
+\DoxyCodeLine{00046\ \textcolor{keywordtype}{void}\ Measure(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00047\ \textcolor{keywordtype}{double}\ Boltzmann(\textcolor{keywordtype}{double},\ \textcolor{keywordtype}{double},\ \textcolor{keywordtype}{double},\ \textcolor{keywordtype}{int});}
+\DoxyCodeLine{00048\ \textcolor{keywordtype}{double}\ Pbc(\textcolor{keywordtype}{double});}
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{double}\ Error(\textcolor{keywordtype}{double},\textcolor{keywordtype}{double},\textcolor{keywordtype}{int});}
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{double}\ Force(\textcolor{keywordtype}{int},\ \textcolor{keywordtype}{int});}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

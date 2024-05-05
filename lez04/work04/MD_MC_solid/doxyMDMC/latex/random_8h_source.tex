@@ -1,0 +1,58 @@
+\doxysection{C\+:/\+LSN/lez04/work04/\+MD\+\_\+\+MC\+\_\+solid/random.h}
+\hypertarget{random_8h_source}{}\label{random_8h_source}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/****************************************************************}}
+\DoxyCodeLine{00002\ \textcolor{comment}{*****************************************************************}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ \ \ \ \_/\ \ \ \ \_/\ \ \_/\_/\_/\ \ \_/\ \ \ \ \ \ \ Numerical\ Simulation\ Laboratory}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \_/\_/\ \ \_/\ \_/\ \ \ \ \ \ \ \_/\ \ \ \ \ \ \ Physics\ Department}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \_/\ \ \_/\_/\ \ \ \ \_/\ \ \ \ \_/\ \ \ \ \ \ \ Universita'\ degli\ Studi\ di\ Milano}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \_/\ \ \ \ \_/\ \ \ \ \ \ \ \_/\ \_/\ \ \ \ \ \ \ Prof.\ D.E.\ Galli}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\_/\ \ \ \ \_/\ \ \_/\_/\_/\ \ \_/\_/\_/\_/\ email:\ Davide.Galli@unimi.it}}
+\DoxyCodeLine{00008\ \textcolor{comment}{*****************************************************************}}
+\DoxyCodeLine{00009\ \textcolor{comment}{*****************************************************************/}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ \_\_Random\_\_}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ \_\_Random\_\_}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ This\ class\ contains\ functions\ for\ generating\ random\ numbers\ using\ the\ RANNYU\ algorithm}}
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_random}{Random}}\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ \textcolor{keywordtype}{int}\ m1,m2,m3,m4,l1,l2,l3,l4,n1,n2,n3,n4;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \textcolor{comment}{//\ Default\ constructor}}
+\DoxyCodeLine{00024\ \ \ \mbox{\hyperlink{class_random}{Random}}();}
+\DoxyCodeLine{00025\ \ \ \textcolor{comment}{//\ Destructor}}
+\DoxyCodeLine{00026\ \ \ \mbox{\hyperlink{class_random}{\string~Random}}();}
+\DoxyCodeLine{00027\ \ \ \textcolor{comment}{//\ Method\ to\ set\ the\ seed\ for\ the\ RNG}}
+\DoxyCodeLine{00028\ \ \ \textcolor{keywordtype}{void}\ SetRandom(\textcolor{keywordtype}{int}\ *\ ,\ \textcolor{keywordtype}{int},\ \textcolor{keywordtype}{int});}
+\DoxyCodeLine{00029\ \ \ \textcolor{comment}{//\ Method\ to\ save\ the\ seed\ to\ a\ file}}
+\DoxyCodeLine{00030\ \ \ \textcolor{keywordtype}{void}\ SaveSeed();}
+\DoxyCodeLine{00031\ \ \ \textcolor{comment}{//\ Method\ to\ generate\ a\ random\ number\ in\ the\ range\ [0,1)}}
+\DoxyCodeLine{00032\ \ \ \textcolor{keywordtype}{double}\ Rannyu(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00033\ \ \ \textcolor{comment}{//\ Method\ to\ generate\ a\ random\ number\ in\ the\ range\ [min,max)}}
+\DoxyCodeLine{00034\ \ \ \textcolor{keywordtype}{double}\ Rannyu(\textcolor{keywordtype}{double}\ min,\ \textcolor{keywordtype}{double}\ max);}
+\DoxyCodeLine{00035\ \ \ \textcolor{comment}{//\ Method\ to\ generate\ a\ random\ number\ with\ a\ Gaussian\ distribution}}
+\DoxyCodeLine{00036\ \ \ \textcolor{keywordtype}{double}\ Gauss(\textcolor{keywordtype}{double}\ mean,\ \textcolor{keywordtype}{double}\ sigma);}
+\DoxyCodeLine{00037\ \ \ \textcolor{comment}{//\ Method\ to\ generate\ a\ random\ number\ with\ a\ Lorentzian\ distribution}}
+\DoxyCodeLine{00038\ \ \ \textcolor{keywordtype}{double}\ Lorentz(\textcolor{keywordtype}{double}\ mean,\ \textcolor{keywordtype}{double}\ gamma);}
+\DoxyCodeLine{00039\ \ \ \textcolor{comment}{//\ Method\ to\ generate\ a\ random\ number\ with\ an\ exponential\ distribution}}
+\DoxyCodeLine{00040\ \ \ \textcolor{keywordtype}{double}\ Expo(\textcolor{keywordtype}{double}\ lambda);}
+\DoxyCodeLine{00041\ \};}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_Random\_\_}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{/****************************************************************}}
+\DoxyCodeLine{00046\ \textcolor{comment}{*****************************************************************}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ \ \_/\ \ \ \ \_/\ \ \_/\_/\_/\ \ \_/\ \ \ \ \ \ \ Numerical\ Simulation\ Laboratory}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ \ \_/\_/\ \ \_/\ \_/\ \ \ \ \ \ \ \_/\ \ \ \ \ \ \ Physics\ Department}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ \_/\ \ \_/\_/\ \ \ \ \_/\ \ \ \ \_/\ \ \ \ \ \ \ Universita'\ degli\ Studi\ di\ Milano}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \_/\ \ \ \ \_/\ \ \ \ \ \ \ \_/\ \_/\ \ \ \ \ \ \ Prof.\ D.E.\ Galli}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\_/\ \ \ \ \_/\ \ \_/\_/\_/\ \ \_/\_/\_/\_/\ email:\ Davide.Galli@unimi.it}}
+\DoxyCodeLine{00052\ \textcolor{comment}{*****************************************************************}}
+\DoxyCodeLine{00053\ \textcolor{comment}{*****************************************************************/}}
+
+\end{DoxyCode}
