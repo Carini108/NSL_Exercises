@@ -14,15 +14,15 @@ using namespace std;
 
 // psi_trial (up to a normalization constant)
 double trial_minimizer(double x, double m, double s) {
-    return (exp(-(0.5 * pow((m - x), 2)) / pow(s, 2)) + exp(-(0.5 * pow((m + x), 2)) / pow(s, 2)));
+    return (exp(-(0.5 * pow((m - x), 2.)) / pow(s, 2.)) + exp(-(0.5 * pow((m + x), 2.)) / pow(s, 2.)));
 };
 // square modulus
 double square_modulus(double x, double m, double s) {
-    return pow(trial_minimizer(x, m, s), 2);
+    return pow(trial_minimizer(x, m, s), 2.);
 };
 // second derivative
 double sec_der(double x, double m, double s) {
-    return ( pow(s,-4.)*( (m*m-2.*m*x-s*s+x*x)*exp(-(pow(x-m,2.))/(2*s*s)) + (m*m+2.*m*x-s*s+x*x)*exp(-(pow(x+m,2.))/(2*s*s)) ) );
+    return ( pow(s,-4.)*( (m*m-2.*m*x-s*s+x*x)*exp(-(pow((x-m),2.))/(2*s*s)) + (m*m+2.*m*x-s*s+x*x)*exp(-(pow((x+m),2.))/(2*s*s)) ) );
 };
 // kinetic term
 double kinetic(double x, double m, double s, double hbar, double mass) {
@@ -76,13 +76,13 @@ int main(int argc, char *argv[]) {
 
     /****************************************************************************
      * Part 1
-    Variational Monte Carlo code 
-    M(RT)^2 algorithm 
-    sample the square modulus of trial wave function $|\Psi_T^{\sigma,\mu}(x)|^2$ 
-    using uniform transition probability $T(x_{new}|x_{old})$ for new candidates
+    Preparation for Variational Monte Carlo code:
+     -  M(RT)^2 algorithm samples the square modulus 
+        of trial wave function $|\Psi_T^{\sigma,\mu}(x)|^2$ 
+        using uniform transition probability $T(x_{new}|x_{old})$ for new candidates
     *****************************************************************************/
 
-    // set trial parameters
+    // set trial parameters (set shape)
     double m = 1.; // mean
     double s = 0.5;// standard deviation
     // sampling
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
             q = q_new_proposed;
             Q.push_back(q);
-            j++;
+            j++; // increasing j ONLY when move is accepted gives control over the number of extracted q s!
         } else {
             refused_moves++;
         }
@@ -120,13 +120,13 @@ int main(int argc, char *argv[]) {
     cout << "\n=============== Part 2 =================== " << endl;
     cout << "===== find energy for fixed mu,sigma =====\n " << endl;
 
-    int number_of_blks = 200; // i.e. estimate the integral for number_of_blks times
-    vector<double> integrals; // store the results
+    int number_of_blks = 300; // i.e. estimate the integral for number_of_blks times
+    int throws_per_integration_block = 500; // points for each estimate
+    vector<double> integrals; // vector to store the results
     for (int g=0; g<number_of_blks; g++) {
         // STORE A CHAIN of x on which to sample the integral
         q = rnd.Rannyu(m-s,m+s); // metropolis starting point (in the middle of a hill)
         Q.clear(); // store the Markov chain
-        int throws_per_integration_block = 500;
         width = 2.5;
         for (int j = 0; j < throws_per_integration_block; j=j) {
             double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
@@ -142,7 +142,8 @@ int main(int argc, char *argv[]) {
             integral = static_cast<double>(i)/static_cast<double>(i+1)*integral + energy(Q[i],m,s,hbar,mass)/static_cast<double>(i+1); 
         }
         integrals.push_back(integral); // save to vector
-        if ((g+1)%20==0) {
+        if ((g+1)%50==0) {
+            cout << "..." << endl;
             cout << "Block "<< g+1 << endl;
         }
     }
@@ -169,15 +170,15 @@ int main(int argc, char *argv[]) {
     * Part 3
     simulated annealing
     *****************************************************************************/
-   
+
     cout << "\n=============== Part 3 ===================" << endl; 
     cout <<   "========== (SA) param. optimiz. ==========\n" << endl; 
-
+    /*
     // starting parameters
     double starting_m = 1.0;
-    double m_width = 0.2; // candidates extraction
+    double m_width = 0.22; // candidates extraction
     double starting_s = 0.3;
-    double s_width = 0.2; // candidates extraction
+    double s_width = 0.22; // candidates extraction
     // store sequence of parameters (to be plotted in 2D plane later)
     vector<double> m_sequence;
     vector<double> s_sequence;
@@ -209,7 +210,7 @@ int main(int argc, char *argv[]) {
     // STORE A CHAIN of x on which to sample the integral
     q = rnd.Rannyu(starting_m-starting_s,starting_m+starting_s); // metropolis starting point (in the middle of a hill)
     Q.clear(); // store the Markov chain
-    width = 3.;
+    width = 4.;
     for (int j = 0; j < tot_throws; j=j) {
         double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
         if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, starting_m, starting_s) / square_modulus(q, starting_m, starting_s))) {   
@@ -253,7 +254,7 @@ int main(int argc, char *argv[]) {
         // STORE A CHAIN of x on which to sample the integral
         q = rnd.Rannyu(proposed_m-proposed_s,proposed_m+proposed_s); // metropolis starting point (in the middle of a hill)
         Q.clear(); // store the Markov chain
-        width = 3.;
+        width = 5.;
         for (int j = 0; j < tot_throws; j=j) {
             double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
             if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, proposed_m, proposed_s) / square_modulus(q, proposed_m, proposed_s)) ) {   
@@ -295,26 +296,28 @@ int main(int argc, char *argv[]) {
     Print(m_sequence,"m_sequence.dat");
     Print(s_sequence,"s_sequence.dat");
     Print(config_ene_sequence,"e_sequence.dat");
-    
+    */
     /****************************************************************************
     * Part 4
-    use parameters obtained
+    use parameters obtained (equal to part 2)
     *****************************************************************************/
     
     cout << "\n=============== Part 4 ===================" << endl; 
     cout <<   "==========  use the parameters  ==========\n" << endl; 
 
     // use the parameters found
-    m = m_sequence.back();
-    s = s_sequence.back();
+    m = -0.889054;//m_sequence.back();//μ = -0.889054
+    s = 0.515735;// s_sequence.back();//σ = 0.515735
+    cout << "Energy estimate using:\tmu = " << m <<"\tsigma = " << s << endl;
     
-    number_of_blks = 300; // i.e. estimate the integral for number_of_blks times
+    number_of_blks = 500; // i.e. estimate the integral for number_of_blks times
+    throws_per_integration_block = 500;
     integrals.clear(); // store the results
+    
     for (int g=0; g<number_of_blks; g++) {
         // STORE A CHAIN of x on which to sample the integral
         q = rnd.Rannyu(m-s,m+s); // metropolis starting point (in the middle of a hill)
         Q.clear(); // store the Markov chain
-        int throws_per_integration_block = 500;
         int proposed = 0;
         width = 5.5;
         for (int j = 0; j < throws_per_integration_block; j=j) {
@@ -323,20 +326,21 @@ int main(int argc, char *argv[]) {
             if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
                 q = q_new_proposed;
                 Q.push_back(q);
-                j++;
+                j++; // increasing j ONLY when move is accepted gives control over the number of extracted q s!
             }
         }
-        /*cout << "\nproposed = " << throws_per_integration_block << endl;
-        cout << "accepted = " << proposed << endl;
-        cout << "acceptance = " << static_cast<double>(throws_per_integration_block)/static_cast<double>(proposed) << endl;*/
         // COMPUTE THE INTEGRAL (mean)
         double integral = 0;
         for (int i = 0; i < throws_per_integration_block; i++) {
             integral = static_cast<double>(i)/static_cast<double>(i+1)*integral + energy(Q[i],m,s,hbar,mass)/static_cast<double>(i+1); 
         }
         integrals.push_back(integral);
-        if ((g+1)%20==0) {
+        if ((g+1)%50==0) {
+            cout << ".\n.\n." << endl;
             cout << "Block "<< g+1 << endl;
+            cout << "\taccepted q points = " << throws_per_integration_block << endl;
+            cout << "\tproposed q points = " << proposed << endl;
+            cout << "\tacceptance = " << static_cast<double>(throws_per_integration_block)/static_cast<double>(proposed) << endl;
         }
     }
     // print integrals, pure as they are from the blocks
