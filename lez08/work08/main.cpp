@@ -173,12 +173,12 @@ int main(int argc, char *argv[]) {
 
     cout << "\n=============== Part 3 ===================" << endl; 
     cout <<   "========== (SA) param. optimiz. ==========\n" << endl; 
-    /*
+    
     // starting parameters
     double starting_m = 1.0;
-    double m_width = 0.22; // candidates extraction
+    double m_width = 0.2; // candidates extraction
     double starting_s = 0.3;
-    double s_width = 0.22; // candidates extraction
+    double s_width = 0.2; // candidates extraction
     // store sequence of parameters (to be plotted in 2D plane later)
     vector<double> m_sequence;
     vector<double> s_sequence;
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
     // STORE A CHAIN of x on which to sample the integral
     q = rnd.Rannyu(starting_m-starting_s,starting_m+starting_s); // metropolis starting point (in the middle of a hill)
     Q.clear(); // store the Markov chain
-    width = 4.;
+    width = 5.;
     for (int j = 0; j < tot_throws; j=j) {
         double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
         if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, starting_m, starting_s) / square_modulus(q, starting_m, starting_s))) {   
@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
         // STORE A CHAIN of x on which to sample the integral
         q = rnd.Rannyu(proposed_m-proposed_s,proposed_m+proposed_s); // metropolis starting point (in the middle of a hill)
         Q.clear(); // store the Markov chain
-        width = 5.;
+        width = 3.5;
         for (int j = 0; j < tot_throws; j=j) {
             double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
             if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, proposed_m, proposed_s) / square_modulus(q, proposed_m, proposed_s)) ) {   
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
         // decide whether to accept or not the new mu and sigma
         if ( rnd.Rannyu() < min(1.0, exp( beta*(-new_energy+old_energy) ) ) ) {
             //cout << "exp = "<< exp( beta*(-new_energy+old_energy) ) << endl;   
-            starting_m = proposed_m;
+            starting_m = proposed_m; // update
             starting_s = proposed_s;
             old_energy = new_energy;
             if ( (l+1)%inside_steps == 0 ) {
@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
                 m_sequence.push_back(starting_m);
                 config_ene_sequence.push_back(old_energy);
             }
-            l++;
+            l++; // increasing j ONLY when move is accepted gives control over the number of moves!
         }
     }
     cout << "Acceptance = " <<static_cast<double>(SA_length)/TOTPROPOSALS << endl;
@@ -296,7 +296,7 @@ int main(int argc, char *argv[]) {
     Print(m_sequence,"m_sequence.dat");
     Print(s_sequence,"s_sequence.dat");
     Print(config_ene_sequence,"e_sequence.dat");
-    */
+    
     /****************************************************************************
     * Part 4
     use parameters obtained (equal to part 2)
