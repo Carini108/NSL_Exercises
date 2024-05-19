@@ -89,29 +89,29 @@ int main(int argc, char *argv[]) {
     double q = 0.; // metropolis starting point
     vector<double> Q; // store the Markov chain
     int refused_moves = 0;
-    int tot_n_of_proposals = 0;
     int wanted_moves = pow(10,4);
-    double width = 2.5;
+    double width = 4.0;
 
     cout << "\n=============== Part 1 =================== " << endl;
     cout << "============= do histogram ===============\n " << endl;
 
-    for (int j = 0; j < wanted_moves; j=j) {
+    for (int j = 0; j < wanted_moves; j++) {
         double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
-        tot_n_of_proposals++;
         if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
             q = q_new_proposed;
-            Q.push_back(q);
-            j++; // increasing j ONLY when move is accepted gives control over the number of extracted q s!
         } else {
             refused_moves++;
         }
+        if (rnd.Rannyu()<=0.5) { // improves symmetry
+            q = -q;
+        }
+        Q.push_back(q);
     }
     Print( Q , "extracted.dat" );
-    cout << "Total number of accepted moves: " << tot_n_of_proposals-refused_moves << endl; // should be = wanted_moves ...
-    double acceptance = static_cast<double>(tot_n_of_proposals-refused_moves) / static_cast<double>(tot_n_of_proposals);
+    cout << "Total number of accepted moves: " << wanted_moves-refused_moves << endl; // should be = wanted_moves ...
+    double acceptance = static_cast<double>(wanted_moves-refused_moves) / static_cast<double>(wanted_moves);
     cout << "Metropolis acceptance = " << acceptance * 100.0 << "%" << endl;
-
+    
     /****************************************************************************
      * Part 2
     by using data blocking, the code computes the expectation value for the Hamiltonian
@@ -123,30 +123,29 @@ int main(int argc, char *argv[]) {
     int number_of_blks = 300; // i.e. estimate the integral for number_of_blks times
     int throws_per_integration_block = 500; // points for each estimate
     vector<double> integrals; // vector to store the results
+
     for (int g=0; g<number_of_blks; g++) {
-        // STORE A CHAIN of x on which to sample the integral
+        // BUILD A CHAIN of x on which to sample the integral
         q = rnd.Rannyu(m-s,m+s); // metropolis starting point (in the middle of a hill)
-        Q.clear(); // store the Markov chain
-        width = 2.5;
-        for (int j = 0; j < throws_per_integration_block; j=j) {
-            double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
-            if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
-                q = q_new_proposed;
-                Q.push_back(q);
-                j++;
-            }
-        }
         // COMPUTE THE INTEGRAL (mean)
         double integral = 0;
-        for (int i = 0; i < throws_per_integration_block; i++) {
-            integral = static_cast<double>(i)/static_cast<double>(i+1)*integral + energy(Q[i],m,s,hbar,mass)/static_cast<double>(i+1); 
-        }
+        width = 4.0;
+        for (int j = 0; j < throws_per_integration_block; j++) {
+            double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
+            if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
+                q = q_new_proposed; // accepted
+            }
+            if (rnd.Rannyu()<0.5) { // improve symmetry (equal probability)
+                        q = -q;
+            }
+            integral = static_cast<double>(j)/static_cast<double>(j+1)*integral + energy(q,m,s,hbar,mass)/static_cast<double>(j+1); 
+        } 
         integrals.push_back(integral); // save to vector
-        if ((g+1)%50==0) {
-            cout << "..." << endl;
+        if ((g+1)%50==0) { // signal every 50 blocks
             cout << "Block "<< g+1 << endl;
         }
     }
+
     // print integrals, pure as they are from the blocks
     cout << "Saving block results to file... " << endl;
     Print(integrals,"integrals.dat"); 
@@ -161,86 +160,110 @@ int main(int argc, char *argv[]) {
         ave_ene_integr.push_back(Average(truncated_ene_integr));
         sigma_ene_integr.push_back(sqrt(Variance(truncated_ene_integr)/static_cast<double>(i-1)));
     }
+    cout << "Energy estimate using:\tmu = " << m <<"\tsigma = " << s << endl;
+    cout << "\tE = " << ave_ene_integr.back() <<" +- "<< sigma_ene_integr.back() << endl;
     // save to file
     cout << "Saving progressive averages and errors to file... " << endl;
     Print( ave_ene_integr , "ave_ene_integr.dat" );
     Print( sigma_ene_integr , "sigma_ene_integr.dat" );
-
+    
     /****************************************************************************
     * Part 3
     simulated annealing
     *****************************************************************************/
-
+   
     cout << "\n=============== Part 3 ===================" << endl; 
     cout <<   "========== (SA) param. optimiz. ==========\n" << endl; 
+
+    // ======================================================
+    //  PARAMS AND VAR INITIALIZATION   =====================
+    // ======================================================
     
     // starting parameters
-    double starting_m = 1.0;
-    double m_width = 0.2; // candidates extraction
-    double starting_s = 0.3;
-    double s_width = 0.2; // candidates extraction
+    double starting_m = 1.;
+    double m_width = 0.25; // candidates extraction
+    double starting_s = 0.5;
+    double s_width = 0.25; // candidates extraction
+    // simulated annealing params
+    double temperature = 5.;
+    double beta = 1./temperature; // inverse temperature
+    double final_temp = pow(10.,-3); // desired (low) temperature
+    double cooling_factor = 0.95; // must multiply temp by c_fact to lower temp
+    int necessary_cooling_steps = 1 + log(final_temp/temperature)/log(cooling_factor);
+    int inside_steps = 500; 
+    int SA_length = inside_steps*necessary_cooling_steps;
+    double ACCEPTED_MOVES_IN_PARAMS_SPACE = 0.;
+    cout << "Simulated annealing requires "<< necessary_cooling_steps <<" cooling steps"<< endl;
+
     // store sequence of parameters (to be plotted in 2D plane later)
     vector<double> m_sequence;
     vector<double> s_sequence;
-
-    // simulated annealing
-    double temperature = 5.;
-    double beta = 1./temperature; // inverse temperature
-    double final_temp = 0.5*pow(10.,-1); // desired (low) temperature
-    double cooling_factor = 0.97; // must multiply temp by c_fact to lower temp
-    int necessary_cooling_steps = 1 + log(final_temp/temperature)/log(cooling_factor);
-    int inside_steps = 750; 
-    int SA_length = inside_steps*necessary_cooling_steps;
-
-    cout << "Simulated annealing requires "<< necessary_cooling_steps <<" cooling steps"<< endl;
-
     // energy (for SA)
     double old_energy = 0.;
     double new_energy = 0.;
-    vector<double> config_ene_sequence; // to be plotted later
     // establish the number of throws for estimating energy
-    int tot_throws = 300*500;   // i.e. estimate the integral for tot_throws times
-                                // NOTE: the first part of the exercise ensures that 
-                                //       with such a number of throws the uncertainty will be less than 2%
+    int energy_block_length = 500;
+    int energy_blocks = 300;
+    int tot_throws = energy_block_length*energy_blocks;   // i.e. estimate the integral with tot_throws points
     
     // ======================================================
     //        OLD ENERGY CALCULATION    =====================
     // ======================================================
 
-    // STORE A CHAIN of x on which to sample the integral
-    q = rnd.Rannyu(starting_m-starting_s,starting_m+starting_s); // metropolis starting point (in the middle of a hill)
-    Q.clear(); // store the Markov chain
-    width = 5.;
-    for (int j = 0; j < tot_throws; j=j) {
-        double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
-        if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, starting_m, starting_s) / square_modulus(q, starting_m, starting_s))) {   
-            q = q_new_proposed;
-            Q.push_back(q);
-            j++;
+    cout << "Calculating starting energy configuration..."<< endl;
+    integrals.clear();
+    for (int g=0; g<energy_blocks; g++) {
+        q = rnd.Rannyu(m-s,m+s); // metropolis starting point (in the middle of a hill)
+        double integral = 0;
+        width = 4.0;
+        for (int j = 0; j < energy_block_length; j++) {
+            double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
+            if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
+                q = q_new_proposed; // accepted
+            }
+            if (rnd.Rannyu()<0.5) { // improve symmetry (equal probability)
+                        q = -q;
+            }
+            integral = static_cast<double>(j)/static_cast<double>(j+1)*integral + energy(q,m,s,hbar,mass)/static_cast<double>(j+1); 
+        } 
+        integrals.push_back(integral); // save to vector
+        if ((g+1)%50==0) { // signal every 50 blocks
+            cout << "Block "<< g+1 << endl;
         }
     }
-    // COMPUTE THE INTEGRAL (mean), i.e. THE ENERGY OF THE CONFIGURATION
-    for (int i = 0; i < tot_throws; i++) {
-        old_energy = static_cast<double>(i)/static_cast<double>(i+1)*old_energy + energy(Q[i],starting_m,starting_s,hbar,mass)/static_cast<double>(i+1); 
-    }
+    old_energy = Average(integrals);
+    cout << "Starting configuration energy = " << old_energy << endl;
 
     // ======================================================
-    // END OF OLD ENERGY CALCULATION    =====================
+    //    BUILD MU AND SIGMA CHAIN: M(RT)^2    ==============    
     // ======================================================
 
-    // ======================================================
-    // ======================================================
-    // build the chain of parameters: metropolis    
-    // ======================================================
-    // ======================================================
-    double TOTPROPOSALS = 0;
-    for (int l = 0; l < SA_length; l=l) {
-        if ( (l+1)%inside_steps == 0 ) {
-            beta = beta / cooling_factor;
-            cout << "SA step: " << (l+1)/inside_steps << endl;
+    // print on file while running
+    ofstream file1;
+    ofstream file2;
+    ofstream file3;
+    ofstream file4;
+    file1.open("live_m.dat" , ios::out);
+    file2.open("live_s.dat", ios::out);
+    file3.open("live_energy.dat", ios::out);
+    file4.open("live_energy_error.dat", ios::out);
+
+    for (int l = 0; l < SA_length; l++) {
+
+        // ======================================================
+        // COOLING                   ============================
+        // ======================================================
+        if ( (l+1)%inside_steps == 0 ) { // cools down ONLY every inside_steps steps
+            beta = beta/cooling_factor;// to allow for thermalization / burn-in period
+            cout << "====================================================" << endl;
+            cout << "SA cooling step: " << (l+1)/inside_steps << " out of " << necessary_cooling_steps << endl;
+            cout << "====================================================" << endl;
         }
-        TOTPROPOSALS++;
+        cout << "SA cooling step: " << (l+1)/inside_steps << "\t" << starting_m << "\t" << starting_s <<endl;
+
+        // ======================================================
         // PROPOSALS // propose a move anyway
+        // ======================================================
         double proposed_m = (starting_m - 0.5 * m_width + m_width * rnd.Rannyu()); 
         double proposed_s = 0;
         do {
@@ -251,101 +274,102 @@ int main(int argc, char *argv[]) {
         // COST FUNCTION COMPUTATION ============================
         // ======================================================
 
-        // STORE A CHAIN of x on which to sample the integral
-        q = rnd.Rannyu(proposed_m-proposed_s,proposed_m+proposed_s); // metropolis starting point (in the middle of a hill)
-        Q.clear(); // store the Markov chain
-        width = 3.5;
-        for (int j = 0; j < tot_throws; j=j) {
-            double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
-            if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, proposed_m, proposed_s) / square_modulus(q, proposed_m, proposed_s)) ) {   
-                q = q_new_proposed;
-                Q.push_back(q);
-                j++;
+        vector<double> integral_block_results; // auxiliary variable for each energy block (dimension = energy_blocks)
+
+        for (int h = 0; h < energy_blocks ; h++ ) {
+            q = rnd.Rannyu(proposed_m-proposed_s, proposed_m+proposed_s); // metropolis starting point (in the middle of a hill)
+            width = 4.0;
+            double integral = 0;
+            for (int j = 0; j < energy_block_length; j++) {
+                double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
+                if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, proposed_m, proposed_s) / square_modulus(q, proposed_m, proposed_s)) ) {   
+                    q = q_new_proposed;
+                    j++;
+                }
+                if (rnd.Rannyu()<0.5) {
+                    q = -q;
+                }
+                integral = static_cast<double>(j)/static_cast<double>(j+1)*integral + energy(q,proposed_m,proposed_s,hbar,mass)/static_cast<double>(j+1); 
             }
+            integral_block_results.push_back(integral); // save the result of a single SUB-block
         }
-        // COMPUTE THE INTEGRAL (mean), i.e. THE ENERGY OF THE CONFIGURATION
-        double integral = 0;
-        for (int i = 0; i < tot_throws; i++) {
-            integral = static_cast<double>(i)/static_cast<double>(i+1)*integral + energy(Q[i],proposed_m,proposed_s,hbar,mass)/static_cast<double>(i+1); 
-        }
-        new_energy = integral;
+        new_energy = Average(integral_block_results); // once every block is done, take the average
 
         // ======================================================
-        // END OF COST FUNCTION COMPUTATION =====================
+        // METROPOLIS ACCEPTATION    ============================
         // ======================================================
 
-        // decide whether to accept or not the new mu and sigma
-        if ( rnd.Rannyu() < min(1.0, exp( beta*(-new_energy+old_energy) ) ) ) {
-            //cout << "exp = "<< exp( beta*(-new_energy+old_energy) ) << endl;   
+        if ( rnd.Rannyu() < min(1.0, exp(beta*(-new_energy+old_energy))) ) {
             starting_m = proposed_m; // update
             starting_s = proposed_s;
             old_energy = new_energy;
-            if ( (l+1)%inside_steps == 0 ) {
-                s_sequence.push_back(starting_s);
-                m_sequence.push_back(starting_m);
-                config_ene_sequence.push_back(old_energy);
-            }
-            l++; // increasing j ONLY when move is accepted gives control over the number of moves!
+            ACCEPTED_MOVES_IN_PARAMS_SPACE+=1.;
+        }
+        if ( (l+1)%inside_steps == 0 ) {
+            m_sequence.push_back(starting_m); // update
+            s_sequence.push_back(starting_s); 
+            double ene_error_istantaneous = sqrt(Variance(integral_block_results)/(energy_block_length-1));
+            file1 << starting_m << endl;
+            file2 << starting_s << endl;
+            file3 << old_energy << endl;
+            file4 << ene_error_istantaneous << endl;
         }
     }
-    cout << "Acceptance = " <<static_cast<double>(SA_length)/TOTPROPOSALS << endl;
-    cout << "Best mu = " << m_sequence.back() << endl;
-    cout << "Best sigma = " << s_sequence.back() << endl;    
 
+    cout << "Acceptance = " << ACCEPTED_MOVES_IN_PARAMS_SPACE/static_cast<double>(SA_length) << endl;
+    cout << "Best mu = " << m_sequence.back() << endl;
+    cout << "Best sigma = " << s_sequence.back() << endl;  
+
+    // close live update
+    file1.close();
+    file2.close();
+    file3.close();
+    file4.close();  
     // print the parameters obtained
     Print(m_sequence,"m_sequence.dat");
     Print(s_sequence,"s_sequence.dat");
-    Print(config_ene_sequence,"e_sequence.dat");
     
     /****************************************************************************
     * Part 4
-    use parameters obtained (equal to part 2)
+    use parameters obtained with VMC (but equal to part 2)
     *****************************************************************************/
     
     cout << "\n=============== Part 4 ===================" << endl; 
-    cout <<   "==========  use the parameters  ==========\n" << endl; 
+    cout <<   "========  use the VMC parameters  ========\n" << endl; 
 
-    // use the parameters found
-    m = -0.889054;//m_sequence.back();//μ = -0.889054
-    s = 0.515735;// s_sequence.back();//σ = 0.515735
-    cout << "Energy estimate using:\tmu = " << m <<"\tsigma = " << s << endl;
-    
-    number_of_blks = 500; // i.e. estimate the integral for number_of_blks times
-    throws_per_integration_block = 500;
-    integrals.clear(); // store the results
-    
+    m=m_sequence.back();
+    s=s_sequence.back();
+
+    number_of_blks = 300; // i.e. estimate the integral for number_of_blks times
+    throws_per_integration_block = 500; // points for each estimate
+    integrals.clear(); // vector to store the results
+
     for (int g=0; g<number_of_blks; g++) {
-        // STORE A CHAIN of x on which to sample the integral
+        // BUILD A CHAIN of x on which to sample the integral
         q = rnd.Rannyu(m-s,m+s); // metropolis starting point (in the middle of a hill)
-        Q.clear(); // store the Markov chain
-        int proposed = 0;
-        width = 5.5;
-        for (int j = 0; j < throws_per_integration_block; j=j) {
-            double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
-            proposed++;
-            if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
-                q = q_new_proposed;
-                Q.push_back(q);
-                j++; // increasing j ONLY when move is accepted gives control over the number of extracted q s!
-            }
-        }
         // COMPUTE THE INTEGRAL (mean)
         double integral = 0;
-        for (int i = 0; i < throws_per_integration_block; i++) {
-            integral = static_cast<double>(i)/static_cast<double>(i+1)*integral + energy(Q[i],m,s,hbar,mass)/static_cast<double>(i+1); 
-        }
-        integrals.push_back(integral);
-        if ((g+1)%50==0) {
-            cout << ".\n.\n." << endl;
+        width = 4.0;
+        for (int j = 0; j < throws_per_integration_block; j++) {
+            double q_new_proposed = (q - 0.5 * width + width * rnd.Rannyu()); // propose a move anyway
+            if (rnd.Rannyu() < min(1.0, square_modulus(q_new_proposed, m, s) / square_modulus(q, m, s))) {   
+                q = q_new_proposed; // accepted
+            }
+            if (rnd.Rannyu()<0.5) { // improve symmetry (equal probability)
+                        q = -q;
+            }
+            integral = static_cast<double>(j)/static_cast<double>(j+1)*integral + energy(q,m,s,hbar,mass)/static_cast<double>(j+1); 
+        } 
+        integrals.push_back(integral); // save to vector
+        if ((g+1)%50==0) { // signal every 50 blocks
             cout << "Block "<< g+1 << endl;
-            cout << "\taccepted q points = " << throws_per_integration_block << endl;
-            cout << "\tproposed q points = " << proposed << endl;
-            cout << "\tacceptance = " << static_cast<double>(throws_per_integration_block)/static_cast<double>(proposed) << endl;
         }
     }
+
     // print integrals, pure as they are from the blocks
     cout << "Saving block results to file... " << endl;
-    Print(integrals,"final_integrals.dat");  // DIFFERENT NAME!
+    Print(integrals,"integrals_VMC.dat"); 
+
     // DATA BLOCKING
     cout << "Data blocking... " << endl;
     // let us build a progression of increasing blocks
@@ -356,10 +380,12 @@ int main(int argc, char *argv[]) {
         ave_ene_integr.push_back(Average(truncated_ene_integr));
         sigma_ene_integr.push_back(sqrt(Variance(truncated_ene_integr)/static_cast<double>(i-1)));
     }
+    cout << "Energy estimate using:\tmu = " << m <<"\tsigma = " << s << endl;
+    cout << "\tE = " << ave_ene_integr.back() <<" +- "<< sigma_ene_integr.back() << endl;
     // save to file
     cout << "Saving progressive averages and errors to file... " << endl;
-    Print( ave_ene_integr , "ave_final_integr.dat" );
-    Print( sigma_ene_integr , "sigma_final_integr.dat" );
+    Print( ave_ene_integr , "ave_ene_integr_VMC.dat" );
+    Print( sigma_ene_integr , "sigma_ene_integr_VMC.dat" );
     
     /****************************************************************************
     closing
