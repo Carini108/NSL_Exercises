@@ -29,7 +29,7 @@ int main()
         SavePlotPointAndUpdateTemp(n_th_point,n_of_plt_points); //Save only last block
       }
     }
-    ConfFinal(); //Uncomment to write final configuration
+    //ConfFinal(); //Uncomment to write final configuration
   }
   return 0;
 }
