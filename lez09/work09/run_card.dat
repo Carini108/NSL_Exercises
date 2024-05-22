@@ -1,0 +1,17 @@
+8
+2
+0.05
+0.05
+0.05
+0.05
+0.0
+
+
+
+  ReadInput >> population_size;
+  ReadInput >> which_loss;
+  ReadInput >> P_pair_permutation;
+  ReadInput >> P_shift;
+  ReadInput >> P_group_permutation;
+  ReadInput >> P_inversion;
+  ReadInput >> P_crossover;
