@@ -20,7 +20,8 @@ Random rnd;
 //////////////////////////////////////////////////////////////
 // genetic algorithm parameters
 double P_pair_permutation, P_shift, P_group_permutation, P_inversion, P_crossover;
-unsigned int population_size, which_loss;
+const double percentage_to_kill = 0.99;
+unsigned int population_size, which_loss, number_of_generations;
 
 //////////////////////////////////////////////////////////////
 // class for cities
@@ -50,10 +51,17 @@ double Loss(const vector<int>& permutation, const vector<City>& cities, const un
 void printIndividual(const vector<int>& individual);
 void printPopulation(const vector<vector<int>>& population);
 void printCity(const City& city);
-//void pair_permutation();
-//void shift();
-//void group_permutation();
-//void inversion();
-//void crossover();
+// 
+void GenMut_PairPerm(vector<int>& individual, Random& rnd, int numberOfCities);
+void GenMut_Shift(vector<int>& individual, Random& rnd, int numberOfCities);
+void GenMut_GroupsPermutation(vector<int>& individual, Random& rnd, int numberOfCities);
+void GenMut_Inversion(vector<int>& individual, Random& rnd, int numberOfCities);
+void doCrossover(vector<int>& parent_1, vector<int>& parent_2, Random& rnd);
+// 
+vector<double> calculateUnfitnessParameters(const vector<vector<int>>& population, const vector<City>& cities, unsigned int which_loss);
+void printUP(const vector<double>& UnfitnessParameters);
+void sortPopulationByUnfitness(vector<vector<int>>& population, const vector<double>& unfitnessParameters);
+void killAndReplace(vector<vector<int>>& Population, const vector<double>& sorted_UP, double percentage_to_kill, Random& rnd);
+void writeFittestToFile(const vector<int>& fittest, const vector<City>& cities, const string& filename);
 
 #endif
