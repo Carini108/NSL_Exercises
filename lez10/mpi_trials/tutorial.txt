@@ -1,0 +1,39 @@
+INSTRUCTIONS FOR PARALLEL MPI (FORM LECTURE 10 PDF) :
+
+- Load MPI module (1 time): module load mpi/mpich-3.2-x86_64
+– Compile: mpicxx example_1.cpp
+– Run on 4 processors: mpiexec -np 4 ./a.out
+_________________________________________________________________
+
+WORKED FOR ME : 
+
+sudo apt install mpich
+mpicxx example_1.cpp OR mpic++ example_1.cpp
+mpiexec -np 4 ./a.out
+
+(NEED TO SPECIFY FOLDER ./ !)
+
+SEE ALSO :
+https://www.youtube.com/watch?v=OGez4VNYhJA
+
+_________________________________________________________________
+
+
+IF USING A MAKEFILE, MAKE SURE THAT THE FIRST ROW IS : 
+CC = mpic++
+CFLAGS = -Wall -O3 --std=c++11
+
+parallel.exe : parallel.o random.o
+	$(CC) random.o parallel.o -o parallel.exe
+parallel.o : parallel.cpp
+	$(CC) -c parallel.cpp -o parallel.o $(CFLAGS)
+random.o : random.cpp random.h
+	$(CC) -c random.cpp -o random.o $(CFLAGS)
+clean :
+	rm *.o parallel.exe
+cleanoutput :
+	rm *.genetic
+
+AND THEN, TO RUN, USE :
+
+mpiexec -np 4 ./parallel.exe

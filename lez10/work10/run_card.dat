@@ -1,0 +1,20 @@
+1000
+1
+0.15
+0.1
+0.05
+0.1
+0.99
+500
+0
+10
+  ReadInput >> population_size;
+  ReadInput >> which_loss;
+  ReadInput >> P_pair_permutation;
+  ReadInput >> P_shift;
+  ReadInput >> P_group_permutation;
+  ReadInput >> P_inversion;
+  ReadInput >> P_crossover;
+  ReadInput >> number_of_generations;
+  ReadInput >> migrations_enabled;
+  ReadInput >> migration_interval;
