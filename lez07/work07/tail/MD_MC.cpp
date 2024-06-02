@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <ostream>
+#include <vector>
 #include <cmath>
 #include <iomanip>
 #include <math.h>
@@ -32,9 +33,15 @@ int main(int argc, char* argv[]) {
       //}
     }
     Averages(iblk);   //Print results for current block
+    NormalizeAndSaveBlock(); //Normalize and save the current block's RDF
   }
   ConfFinal(); //Write final configuration
+  CalculateFinalRDF();  // Calculate final RDF by averaging over all blocks and computing errors
 
+  string filename_rdf_results = "RDF_RESULTS_"+state+".dat";
+  string filename_rdf_block = "RDF_BLOCKS_"+state+".dat";
+  PrintRDFResults(filename_rdf_results ,filename_rdf_block);
+  
   return 0;
 }
 
@@ -120,7 +127,7 @@ void Input(void)
   ik = 2; //Kinetic energy
   ie = 3; //Total energy
   ip = 4; //Pressure
-  n_props = 5; //Number of observables ( 5+1 which is the g(r) )
+  n_props = 5; //Number of observables 
 
 //Read initial configuration
   cout << "Read initial configuration" << endl << endl;
@@ -335,9 +342,7 @@ void Measure() //Properties measurement
   double v = 0.0, kin=0.0, pressure=0.0;
   double vij;
   double dx, dy, dz, dr;
-
-// reset RDF histogram for the block (auxiliary vector that holds the height of each bin)
-  for (int k = 0; k < N_bins; ++k) { rdf_blk[k] = 0.0; }
+  std::fill(rdf_hist.begin(), rdf_hist.end(), 0.0);
 
 // cycle over pairs of particles
   for (int i=0; i<npart-1; ++i)
@@ -357,13 +362,11 @@ void Measure() //Properties measurement
         vij = 1.0/pow(dr,12) - 1.0/pow(dr,6);
         v += vij;
       }
-      // update RDF histogram
-      if ( dr < box / 2.0 ) {
-          int bin = int(dr / (2.*bin_size));
-          //cout << "bin " << bin << " out of " << N_bins << endl;
-          rdf_blk[bin] += 2;  // Each pair is counted twice
+      if (dr < 0.5 * box) // fill g(r) histo
+      {
+        int bin = int( dr / bin_size);
+        rdf_hist[bin] += 2.0; // Increment by 2 for each pair (i, j) and (j, i)
       }
-
     }          
   }
 
@@ -381,10 +384,6 @@ void Measure() //Properties measurement
       }
   }
 
-  // add to block averages
-  for (int k = 0; k < N_bins; ++k) {
-      rdf_hist[k] += rdf_blk[k];
-  }
 
   walker[iv] = 4.0 * v; // Potential energy
   walker[ik] = kin; // Kinetic energy
@@ -393,6 +392,35 @@ void Measure() //Properties measurement
   walker[ip] = rho*temp + (16./vol)*pressure; // Pressure
 
   return;
+}
+
+void NormalizeAndSaveBlock() {
+    std::vector<double> rdf_blk(N_bins, 0.0);
+    for (int i = 0; i < N_bins; ++i) {
+        double r_lower = i * bin_size;
+        double r_upper = (i + 1) * bin_size;
+        double shell_volume = (4.0 / 3.0) * M_PI * (std::pow(r_upper, 3) - std::pow(r_lower, 3)); // function of r!
+        rdf_blk[i] = rdf_hist[i] / (npart * rho * shell_volume);
+    }
+
+    rdf_blocks.push_back(rdf_blk); // fill the vector of vectors
+}
+
+void CalculateFinalRDF() {
+    for (int i = 0; i < N_bins; ++i) {
+
+        std::vector<double> block_values;
+        for (int block = 0; block < nblk; ++block) { block_values.push_back(rdf_blocks[block][i]); }
+
+        // Calculate average
+        double avg = std::accumulate(block_values.begin(), block_values.end(), 0.0) / nblk;
+
+        // Calculate error
+        double error = 0.0; // sum the squared differences
+        for (const double& value : block_values) { error += (value - avg) * (value - avg); }
+        error = std::sqrt(error / (nblk*(nblk - 1)));
+        rdf_results[i] = {avg, error}; // Store final RDF data
+    }
 }
 
 
@@ -405,11 +433,6 @@ void Reset(int iblk) //Reset block averages
        {
            glob_av[i] = 0;
            glob_av2[i] = 0;
-       }
-       for (int k = 0; k < N_bins; ++k) // histogram for rdf g(r)
-       {
-            rdf_avg[k] = 0.0;
-            rdf_avg2[k] = 0.0;
        }
    }
 
@@ -433,10 +456,7 @@ void Accumulate(void) //Update block averages
    // note: in principle, the blk scheme above could have been applied to g(r) as well,
    //       but it is not very convenient, since this would imply adding to n_props 
    //       other N_bins observables...
-   for (int k = 0; k < N_bins; ++k) 
-   {
-    rdf_avg[k] += rdf_blk[k];
-   }
+   
    blk_norm = blk_norm + 1.0;
 }
 
@@ -444,13 +464,13 @@ void Accumulate(void) //Update block averages
 void Averages(int iblk) //Print results for current block
 {
     
-   ofstream Epot, Ekin, Etot, Temp, Pres, RDF;
+   ofstream Epot, Ekin, Etot, Temp, Pres;
    const int wd=12;
     
-    if (iblk%10000==0) {
-      cout << "Block number " << iblk << endl;
-      cout << "Acceptance rate " << accepted/attempted << endl << endl;
-    }
+    
+    cout << "Block number " << iblk << endl;
+    cout << "Acceptance rate " << accepted/attempted << endl << endl;
+    
     Epot.open("output_epot_"+state+".dat",ios::app);
     Ekin.open("output_ekin_"+state+".dat",ios::app);
     Temp.open("output_temp_"+state+".dat",ios::app);
@@ -494,22 +514,10 @@ void Averages(int iblk) //Print results for current block
     Temp << setw(wd) << iblk <<  setw(wd) << stima_temp << setw(wd) << glob_av[it]/(double)iblk << setw(wd) << err_temp << endl;
 //Pressure
     Pres << setw(wd) << iblk <<  setw(wd) << stima_pres << setw(wd) << glob_av[ip]/(double)iblk << setw(wd) << err_pres << endl;
-// RDF calculation
-    RDF.open("output_rdf_" + state + ".dat", ios::app);
-    double r, g_r, norm;
-    for (int k = 0; k < N_bins; ++k) {
-        r = k * bin_size;
-        norm = rho * npart * 4.0 * M_PI / 3.0 * (pow((r + bin_size), 3) - pow(r, 3)); // depends on r!
-        g_r = rdf_hist[k] / (blk_norm * norm);
-        rdf_avg2[k] += g_r * g_r;
-        RDF << setw(wd) << iblk << setw(wd) << r << setw(wd) << g_r << setw(wd) << Error(rdf_avg[k], rdf_avg2[k], iblk) << endl;
-    }
-    RDF.close();
+
     
 // line for clarity
-    if (iblk%10000==0) {
-      cout << "----------------------------" << endl << endl;
-    }
+    cout << "----------------------------" << endl << endl;
 
     Epot.close();
     Ekin.close();
@@ -557,4 +565,36 @@ double Pbc(double r)  //Algorithm for periodic boundary conditions with side L=b
 double Error(double sum, double sum2, int iblk)
 {
     return sqrt(fabs(sum2/(double)iblk - pow(sum/(double)iblk,2))/(double)iblk);
+}
+
+void PrintRDFResults(const string& filename_rdf_results, const string& filename_rdf_blocks) {
+    const int wd=12;
+    // Open file for rdf_results
+    std::ofstream file_rdf_results(filename_rdf_results);
+    if (!file_rdf_results.is_open()) {
+        std::cerr << "Error opening file: " << filename_rdf_results << std::endl;
+        exit(0);
+    }
+    // Print rdf_results to file
+    for (unsigned int i = 0; i < rdf_results.size(); ++i) {
+        //file_rdf_results << "Bin " << i << ": g(r) = " << rdf_results[i].g_r_avg << " +/- " << rdf_results[i].g_r_err << std::endl;
+        file_rdf_results << i*bin_size << setw(wd) << rdf_results[i].g_r_avg << setw(wd) << rdf_results[i].g_r_err << endl; 
+    }
+    // Close file for rdf_results
+    file_rdf_results.close();
+    // Open file for rdf_blocks
+    std::ofstream file_rdf_blocks(filename_rdf_blocks);
+    if (!file_rdf_blocks.is_open()) {
+        std::cerr << "Error opening file: " << filename_rdf_blocks << std::endl;
+        exit(0);
+    }
+    // Print rdf_blocks to file
+    for (unsigned int i = 0; i < rdf_blocks.size(); ++i) {
+        for (unsigned int j = 0; j < rdf_blocks[i].size(); ++j) {
+            //file_rdf_blocks << "Block " << i << ", Bin " << j << ": g(r) = " << rdf_blocks[i][j] << std::endl;
+            file_rdf_blocks << i << setw(wd) << j*bin_size << setw(wd) << rdf_blocks[i][j] << endl;
+        }
+    }
+    // Close file for rdf_blocks
+    file_rdf_blocks.close();
 }

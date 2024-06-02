@@ -17,6 +17,18 @@ double tail_v, tail_p; // tail corrections
 int phase;
 string state, filename;
 
+struct RDFData {
+    double g_r_avg;
+    double g_r_err;
+};
+
+// radial distribution function
+const int N_bins = 500;  // Number of bins for g(r)
+double bin_size = 0.;
+std::vector<double> rdf_hist(N_bins, 0.0);        // histogram for RDF
+std::vector<std::vector<double>> rdf_blocks;      // RDF values for each block
+std::vector<RDFData> rdf_results(N_bins);         // final RDF results with errors
+
 // thermodynamical state
 int npart;
 double beta,temp,energy,vol,rho,box,rcut;
@@ -26,14 +38,6 @@ double blk_av[m_props], blk_norm, accepted, attempted;
 double glob_av[m_props], glob_av2[m_props];
 double stima_pot, stima_pres, stima_kin, stima_etot, stima_temp;
 double err_pot, err_pres, err_kin, err_etot, err_temp;
-
-// radial distribution function
-const int N_bins = 500;  // Number of bins for g(r)
-double bin_size = 0.;
-double rdf_hist[N_bins] = {0.0};
-double rdf_blk[N_bins] = {0.0};
-double rdf_avg[N_bins] = {0.0};
-double rdf_avg2[N_bins] = {0.0};
 
 
 //configuration 
@@ -58,6 +62,9 @@ void Move(void);
 void ConfFinal(void);
 void ConfXYZ(int);
 void Measure(void);
+void NormalizeAndSaveBlock();
+void CalculateFinalRDF();
+void PrintRDFResults(const string&, const string&);
 double Boltzmann(double, double, double, int);
 double Pbc(double);
 double Error(double,double,int);
